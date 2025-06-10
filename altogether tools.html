@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optify Tools - Business Calculators</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom styles for enhanced UI */
+        .tab-button {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .tab-button:not(.active):hover {
+            background-color: #f1f5f9;
+            transform: translateY(-1px);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .calculator-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .calculator-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .gradient-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        /* Enhanced form styling */
+        .form-input {
+            transition: all 0.2s ease;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .form-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .tab-button {
+                font-size: 0.875rem;
+                padding: 0.5rem 0.75rem;
+            }
+            
+            .calculator-card {
+                margin: 0.5rem;
+                padding: 1rem;
+            }
+            
+            /* Make charts bigger on mobile */
+            canvas {
+                min-height: 300px !important;
+                max-height: 400px !important;
+            }
+            
+            /* Stack business analysis layout on mobile */
+            .business-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1.5rem !important;
+            }
+            
+            /* Ensure tables are scrollable on mobile */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-header text-white py-6 shadow-lg">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-center">🚀 Optify Tools</h1>
+            <p class="text-center mt-2 text-blue-100">Professional Business Calculators Suite</p>
+        </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-10">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-wrap justify-center md:justify-start space-x-1 md:space-x-4 py-4">
+                <button onclick="showTab('pricing')" id="pricing-tab" class="tab-button active px-4 py-2 rounded-lg font-medium">
+                    💰 Pricing Calculator
+                </button>
+                <button onclick="showTab('kot')" id="kot-tab" class="tab-button px-4 py-2 rounded-lg font-medium">
+                    🍽️ KOT Analyzer
+                </button>
+                <button onclick="showTab('business')" id="business-tab" class="tab-button px-4 py-2 rounded-lg font-medium">
+                    📊 Business Analysis
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        
+        <!-- Pricing Calculator Tab -->
+        <div id="pricing-content" class="tab-content active">
+            <div class="calculator-card max-w-2xl mx-auto p-8">
+                <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">💰 Optify Pricing Calculator</h2>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label for="pricing-revenue" class="block text-sm font-medium text-gray-700 mb-2">Monthly Revenue (AED)</label>
+                        <input type="number" id="pricing-revenue" class="form-input w-full px-4 py-3 rounded-lg" placeholder="Enter monthly revenue">
+                    </div>
+                    
+                    <div>
+                        <label for="pricing-employees" class="block text-sm font-medium text-gray-700 mb-2">Number of Employees</label>
+                        <input type="number" id="pricing-employees" class="form-input w-full px-4 py-3 rounded-lg" placeholder="Enter number of employees">
+                    </div>
+                    
+                    <button onclick="calculatePricing()" class="btn-primary w-full py-3 text-white font-semibold rounded-lg">
+                        Calculate Pricing
+                    </button>
+                </div>
+                
+                <div id="pricing-result" class="hidden mt-8 p-6 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                    <h3 class="font-bold text-lg mb-4 text-blue-800">Pricing Results</h3>
+                    <div id="pricing-output" class="space-y-2 text-gray-700"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KOT Calculator Tab -->
+        <div id="kot-content" class="tab-content">
+            <div class="calculator-card max-w-6xl mx-auto p-8">
+                <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">🍽️ KOT Range Analyzer</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Inputs -->
+                    <div class="space-y-6">
+                        <div>
+                            <label for="kot-type" class="block text-sm font-medium text-gray-700 mb-2">F&B Type</label>
+                            <select id="kot-type" class="form-input w-full px-4 py-3 rounded-lg">
+                                <option>Cafeterias and Canteens</option>
+                                <option>Restaurants</option>
+                                <option>Bars and Lounges</option>
+                                <option>Juice Shops</option>
+                                <option>Bakeries & patisseries</option>
+                                <option>Dessert Shops</option>
+                                <option>Food Courts</option>
+                                <option>Cafés and Coffee Shops</option>
+                                <option>Pizzeria</option>
+                                <option>Burger Shops</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="kot-area" class="block text-sm font-medium text-gray-700 mb-2">Area Class</label>
+                            <select id="kot-area" class="form-input w-full px-4 py-3 rounded-lg">
+                                <option>Rich</option>
+                                <option>Normal</option>
+                                <option>Lower Income</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="kot-revenue" class="block text-sm font-medium text-gray-700 mb-2">Daily Revenue (AED)</label>
+                            <input id="kot-revenue" type="number" class="form-input w-full px-4 py-3 rounded-lg" placeholder="Enter daily revenue">
+                        </div>
+
+                        <div>
+                            <label for="kot-aov" class="block text-sm font-medium text-gray-700 mb-2">AOV (AED)</label>
+                            <input id="kot-aov" type="number" class="form-input w-full px-4 py-3 rounded-lg" placeholder="Enter average order value">
+                        </div>
+
+                        <button onclick="analyzeKOT()" class="btn-primary w-full py-3 text-white font-semibold rounded-lg">
+                            Analyze KOT
+                        </button>
+                    </div>
+
+                    <!-- Output -->
+                    <div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-center border border-gray-300 rounded-lg overflow-hidden">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="p-3 border-b">AOV</th>
+                                        <th class="p-3 border-b">Daily Revenue</th>
+                                        <th class="p-3 border-b">Healthy KOT Range</th>
+                                        <th class="p-3 border-b">Client KOT</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kot-output-table">
+                                    <tr>
+                                        <td class="p-3 border-b text-gray-500" colspan="4">—</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-6">
+                            <canvas id="kot-chart" class="w-full" style="min-height: 300px; max-height: 500px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Analysis Tab -->
+        <div id="business-content" class="tab-content">
+            <div class="calculator-card max-w-6xl mx-auto p-8">
+                <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">📊 Business Analysis Calculator</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 business-grid">
+                    <!-- Inputs -->
+                    <div class="space-y-6">
+                        <div>
+                            <label for="business-outlet" class="block text-sm font-medium text-gray-700 mb-2">Outlet Type</label>
+                            <select id="business-outlet" class="form-input w-full px-4 py-3 rounded-lg">
+                                <option>Cafeterias and Canteens</option>
+                                <option>Restaurants</option>
+                                <option>Bars and Lounges</option>
+                                <option>Juice Shops</option>
+                                <option>Bakeries & Patisseries</option>
+                                <option>Dessert Shops</option>
+                                <option>Food Courts</option>
+                                <option>Cafés and Coffee Shops</option>
+                                <option>Pizzeria</option>
+                                <option>Burger Shops</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="business-tier" class="block text-sm font-medium text-gray-700 mb-2">Area Class</label>
+                            <select id="business-tier" class="form-input w-full px-4 py-3 rounded-lg">
+                                <option>Tier 1 (Prime Urban)</option>
+                                <option>Tier 2 (Suburban)</option>
+                                <option>Tier 3 (Low Cost)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="business-revenue" class="block text-sm font-medium text-gray-700 mb-2">Monthly Revenue (AED)</label>
+                            <input type="number" id="business-revenue" class="form-input w-full px-4 py-3 rounded-lg" placeholder="e.g., 300000">
+                        </div>
+
+                        <div>
+                            <label for="business-food" class="block text-sm font-medium text-gray-700 mb-2">Food Cost %</label>
+                            <input type="number" id="business-food" class="form-input w-full px-4 py-3 rounded-lg" placeholder="e.g., 45">
+                        </div>
+
+                        <div>
+                            <label for="business-labor" class="block text-sm font-medium text-gray-700 mb-2">Labor Cost %</label>
+                            <input type="number" id="business-labor" class="form-input w-full px-4 py-3 rounded-lg" placeholder="e.g., 25">
+                        </div>
+
+                        <div>
+                            <label for="business-operating" class="block text-sm font-medium text-gray-700 mb-2">Operating Cost %</label>
+                            <input type="number" id="business-operating" class="form-input w-full px-4 py-3 rounded-lg" placeholder="e.g., 20">
+                        </div>
+
+                        <button onclick="calculateBusiness()" class="btn-primary w-full py-3 text-white font-semibold rounded-lg">
+                            Analyze Business
+                        </button>
+                    </div>
+
+                    <!-- Results -->
+                    <div>
+                        <div class="overflow-x-auto table-container">
+                            <table class="w-full text-sm text-center border border-gray-300 rounded-lg overflow-hidden">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="p-3 border-b"></th>
+                                        <th class="p-3 border-b">Food Cost</th>
+                                        <th class="p-3 border-b">Labor Cost</th>
+                                        <th class="p-3 border-b">Operating Cost</th>
+                                        <th class="p-3 border-b">Net Profit</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="business-result-body">
+                                    <tr>
+                                        <td class="p-3 border-b text-gray-500" colspan="5">No data yet</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div id="business-tags" class="mt-4 p-4 bg-gray-50 rounded-lg text-center font-medium"></div>
+                        
+                        <div class="mt-6">
+                            <canvas id="business-chart" class="w-full" style="min-height: 300px; max-height: 500px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2024 Optify Tools. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab-button');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-content').classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        // Pricing Calculator Logic
+        function calculatePricing() {
+            const revenue = parseFloat(document.getElementById("pricing-revenue").value);
+            const employees = parseInt(document.getElementById("pricing-employees").value);
+            const resultDiv = document.getElementById("pricing-result");
+            const outputDiv = document.getElementById("pricing-output");
+
+            if (isNaN(revenue) || isNaN(employees)) {
+                alert("Please enter valid numbers for both revenue and employees.");
+                return;
+            }
+
+            // Revenue Tier Weight
+            let revenueWeight;
+            if (revenue < 150000) {
+                revenueWeight = 1;
+            } else if (revenue < 300000) {
+                revenueWeight = 2;
+            } else if (revenue < 500000) {
+                revenueWeight = 3;
+            } else {
+                revenueWeight = 4;
+            }
+
+            // Employee Tier Weight
+            let employeeWeight;
+            if (employees <= 8) {
+                employeeWeight = 1;
+            } else if (employees <= 15) {
+                employeeWeight = 2;
+            } else if (employees <= 30) {
+                employeeWeight = 3;
+            } else {
+                employeeWeight = 4;
+            }
+
+            // Tier Score
+            const tierScore = revenueWeight + employeeWeight;
+
+            // Setup Fee & AMC Fee & Summary
+            let setupFee, amcFee, summary;
+
+            switch (tierScore) {
+                case 2:
+                    setupFee = 12000;
+                    amcFee = 500;
+                    summary = "Small team and low revenue; basic setup and monitoring.";
+                    break;
+                case 3:
+                    setupFee = 14000;
+                    amcFee = 600;
+                    summary = "Low-moderate scale; medium resource allocation required.";
+                    break;
+                case 4:
+                    setupFee = 16000;
+                    amcFee = 700;
+                    summary = "Balanced team and revenue; moderate complexity and value delivery.";
+                    break;
+                case 5:
+                    setupFee = 18000;
+                    amcFee = 800;
+                    summary = "Growing operation; requires layered support and tracking.";
+                    break;
+                case 6:
+                    setupFee = 21000;
+                    amcFee = 900;
+                    summary = "Large team or higher income operation; custom integration likely.";
+                    break;
+                case 7:
+                    setupFee = 25000;
+                    amcFee = 1000;
+                    summary = "High scale and resource need; advanced dashboards & training.";
+                    break;
+                case 8:
+                    setupFee = 30000;
+                    amcFee = 1200;
+                    summary = "Enterprise-level support; full operational transformation.";
+                    break;
+                default:
+                    setupFee = "N/A";
+                    amcFee = "N/A";
+                    summary = "Invalid tier score.";
+            }
+
+            // Display result
+            outputDiv.innerHTML = `
+                <p><strong>Revenue Tier Weight:</strong> ${revenueWeight}</p>
+                <p><strong>Employee Tier Weight:</strong> ${employeeWeight}</p>
+                <p><strong>Tier Score:</strong> ${tierScore}</p>
+                <p><strong>Setup Fee:</strong> AED ${setupFee.toLocaleString()}</p>
+                <p><strong>AMC Fee:</strong> AED ${amcFee.toLocaleString()}</p>
+                <p><strong>Summary:</strong> ${summary}</p>
+            `;
+            resultDiv.classList.remove("hidden");
+        }
+
+        // KOT Calculator Logic
+        const KOT_DATA = {
+            "Cafeterias and Canteens": {
+                "Rich": [78, 169],
+                "Normal": [74, 166],
+                "Lower Income": [151, 231]
+            },
+            "Restaurants": {
+                "Rich": [78, 175],
+                "Normal": [142, 214],
+                "Lower Income": [154, 224]
+            },
+            "Bars and Lounges": {
+                "Rich": [63, 155],
+                "Normal": [83, 135],
+                "Lower Income": [101, 162]
+            },
+            "Juice Shops": {
+                "Rich": [63, 146],
+                "Normal": [89, 176],
+                "Lower Income": [81, 161]
+            },
+            "Bakeries & patisseries": {
+                "Rich": [72, 123],
+                "Normal": [117, 188],
+                "Lower Income": [187, 271]
+            },
+            "Dessert Shops": {
+                "Rich": [88, 154],
+                "Normal": [118, 209],
+                "Lower Income": [171, 246]
+            },
+            "Food Courts": {
+                "Rich": [54, 140],
+                "Normal": [121, 214],
+                "Lower Income": [134, 196]
+            },
+            "Cafés and Coffee Shops": {
+                "Rich": [76, 166],
+                "Normal": [66, 136],
+                "Lower Income": [152, 250]
+            },
+            "Pizzeria": {
+                "Rich": [57, 100],
+                "Normal": [148, 211],
+                "Lower Income": [193, 261]
+            },
+            "Burger Shops": {
+                "Rich": [65, 157],
+                "Normal": [61, 130],
+                "Lower Income": [171, 237]
+            }
+        };
+
+        let kotChart;
+
+        function analyzeKOT() {
+            const type = document.getElementById("kot-type").value;
+            const area = document.getElementById("kot-area").value;
+            const revenue = parseFloat(document.getElementById("kot-revenue").value);
+            const aov = parseFloat(document.getElementById("kot-aov").value);
+
+            if (!type || !area || !revenue || !aov) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            const kotRange = KOT_DATA[type][area];
+            const clientKOT = +(revenue / aov).toFixed(1);
+
+            document.getElementById("kot-output-table").innerHTML = `
+                <tr>
+                    <td class="p-3 border-b">AED ${aov}</td>
+                    <td class="p-3 border-b">AED ${revenue}</td>
+                    <td class="p-3 border-b">${kotRange[0]}–${kotRange[1]}</td>
+                    <td class="p-3 border-b">${clientKOT}</td>
+                </tr>
+            `;
+
+            const ctx = document.getElementById("kot-chart").getContext("2d");
+            if (kotChart) kotChart.destroy();
+            kotChart = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: ["Healthy KOT Min", "Client KOT", "Healthy KOT Max"],
+                    datasets: [
+                        {
+                            label: "KOT Comparison",
+                            data: [kotRange[0], clientKOT, kotRange[1]],
+                            backgroundColor: ["#22c55e", "#3b82f6", "#22c55e"]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Business Analysis Calculator Logic
+        const businessNormTable = {
+            'Cafeterias and Canteens': {
+                'Tier 1 (Prime Urban)': [30, 35, 18, 25, 20, 25, 10, 15],
+                'Tier 2 (Suburban)': [30, 35, 18, 25, 20, 25, 10, 15],
+                'Tier 3 (Low Cost)': [30, 35, 18, 25, 20, 25, 10, 15],
+            },
+            'Restaurants': {
+                'Tier 1 (Prime Urban)': [32, 38, 28, 35, 25, 30, 5, 10],
+                'Tier 2 (Suburban)': [32, 38, 28, 35, 25, 30, 5, 10],
+                'Tier 3 (Low Cost)': [32, 38, 28, 35, 25, 30, 5, 10],
+            },
+            'Bars and Lounges': {
+                'Tier 1 (Prime Urban)': [25, 30, 20, 28, 30, 35, 10, 15],
+                'Tier 2 (Suburban)': [25, 30, 20, 28, 30, 35, 10, 15],
+                'Tier 3 (Low Cost)': [25, 30, 20, 28, 30, 35, 10, 15],
+            },
+            'Juice Shops': {
+                'Tier 1 (Prime Urban)': [35, 40, 15, 20, 20, 25, 10, 15],
+                'Tier 2 (Suburban)': [35, 40, 15, 20, 20, 25, 10, 15],
+                'Tier 3 (Low Cost)': [35, 40, 15, 20, 20, 25, 10, 15],
+            },
+            'Bakeries & Patisseries': {
+                'Tier 1 (Prime Urban)': [30, 35, 20, 25, 20, 25, 10, 15],
+                'Tier 2 (Suburban)': [30, 35, 20, 25, 20, 25, 10, 15],
+                'Tier 3 (Low Cost)': [30, 35, 20, 25, 20, 25, 10, 15],
+            },
+            'Dessert Shops': {
+                'Tier 1 (Prime Urban)': [28, 33, 22, 28, 22, 26, 10, 15],
+                'Tier 2 (Suburban)': [28, 33, 22, 28, 22, 26, 10, 15],
+                'Tier 3 (Low Cost)': [28, 33, 22, 28, 22, 26, 10, 15],
+            },
+            'Food Courts': {
+                'Tier 1 (Prime Urban)': [30, 34, 18, 25, 25, 30, 8, 12],
+                'Tier 2 (Suburban)': [30, 34, 18, 25, 25, 30, 8, 12],
+                'Tier 3 (Low Cost)': [30, 34, 18, 25, 25, 30, 8, 12],
+            },
+            'Cafés and Coffee Shops': {
+                'Tier 1 (Prime Urban)': [30, 35, 20, 25, 25, 30, 10, 15],
+                'Tier 2 (Suburban)': [30, 35, 20, 25, 25, 30, 10, 15],
+                'Tier 3 (Low Cost)': [30, 35, 20, 25, 25, 30, 10, 15],
+            },
+            'Pizzeria': {
+                'Tier 1 (Prime Urban)': [28, 32, 18, 22, 22, 26, 15, 20],
+                'Tier 2 (Suburban)': [28, 32, 18, 22, 22, 26, 15, 20],
+                'Tier 3 (Low Cost)': [28, 32, 18, 22, 22, 26, 15, 20],
+            },
+            'Burger Shops': {
+                'Tier 1 (Prime Urban)': [30, 34, 20, 25, 25, 30, 10, 15],
+                'Tier 2 (Suburban)': [30, 34, 20, 25, 25, 30, 10, 15],
+                'Tier 3 (Low Cost)': [30, 34, 20, 25, 25, 30, 10, 15],
+            }
+        };
+
+        let businessChart;
+
+        function avg(min, max) {
+            return (min + max) / 2;
+        }
+
+        function calculateBusiness() {
+            const outlet = document.getElementById('business-outlet').value;
+            const tier = document.getElementById('business-tier').value;
+            const revenue = parseFloat(document.getElementById('business-revenue').value);
+            const food = parseFloat(document.getElementById('business-food').value);
+            const labor = parseFloat(document.getElementById('business-labor').value);
+            const operating = parseFloat(document.getElementById('business-operating').value);
+
+            if (isNaN(revenue) || isNaN(food) || isNaN(labor) || isNaN(operating)) {
+                alert("Please fill in all numeric fields.");
+                return;
+            }
+
+            const data = businessNormTable[outlet]?.[tier];
+            if (!data) {
+                alert("Data not found for selection.");
+                return;
+            }
+
+            const foodNorm = avg(data[0], data[1]);
+            const laborNorm = avg(data[2], data[3]);
+            const operatingNorm = avg(data[4], data[5]);
+            const profitNorm = avg(data[6], data[7]);
+
+            const foodAmt = (food / 100) * revenue;
+            const laborAmt = (labor / 100) * revenue;
+            const operAmt = (operating / 100) * revenue;
+            const profit = 100 - (food + labor + operating);
+            const profitAmt = (profit / 100) * revenue;
+
+            const foodNormAmt = (foodNorm / 100) * revenue;
+            const laborNormAmt = (laborNorm / 100) * revenue;
+            const operNormAmt = (operatingNorm / 100) * revenue;
+            const profitNormAmt = (profitNorm / 100) * revenue;
+
+            const tbody = document.getElementById("business-result-body");
+            tbody.innerHTML = `
+                <tr><td>Norm %</td><td>${foodNorm}%</td><td>${laborNorm}%</td><td>${operatingNorm}%</td><td>${profitNorm.toFixed(2)}%</td></tr>
+                <tr><td>Norm AED</td><td>${foodNormAmt.toFixed(0)}</td><td>${laborNormAmt.toFixed(0)}</td><td>${operNormAmt.toFixed(0)}</td><td>${profitNormAmt.toFixed(0)}</td></tr>
+                <tr><td>Client %</td><td>${food}%</td><td>${labor}%</td><td>${operating}%</td><td>${profit.toFixed(2)}%</td></tr>
+                <tr><td>Client AED</td><td>${foodAmt.toFixed(0)}</td><td>${laborAmt.toFixed(0)}</td><td>${operAmt.toFixed(0)}</td><td>${profitAmt.toFixed(0)}</td></tr>
+            `;
+
+            document.getElementById("business-tags").innerHTML = `
+                ${profit < profitNorm ? '🔴 Verdict: Low Profit — Review Costs' : '🟢 Verdict: Healthy Profit Margin'}
+            `;
+
+            const ctx = document.getElementById("business-chart").getContext("2d");
+            if (businessChart) businessChart.destroy();
+            businessChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ["Food Cost", "Labor Cost", "Operating Cost", "Net Profit"],
+                    datasets: [
+                        {
+                            label: "Norm %",
+                            data: [foodNorm, laborNorm, operatingNorm, profitNorm],
+                            backgroundColor: '#a5b4fc'
+                        },
+                        {
+                            label: "Client %",
+                            data: [food, labor, operating, profit],
+                            backgroundColor: '#f87171'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        x: { stacked: false },
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
